@@ -4,7 +4,8 @@ if [ -z "$PLAYDATE_SDK_PATH" ] || [ ! -d "$PLAYDATE_SDK_PATH" ]; then
 fi
 
 set -e
-make device simulator
+#note: for simulator builds, do `make device simulator`
+make device
 pdc ./Source $PLAYDATE_SDK_PATH/Disk/System/Launchers/FunnyOS.pdx
 mkdir -p $PLAYDATE_SDK_PATH/Disk/Shared/FunnyOS2/Widgets/
 for dir in Widgets/*; do
