@@ -320,14 +320,14 @@ local function get_package_list_prepare()
 			]]
 			
 			if not packageInstaller.http then
-				packageInstaller.pending = function()
+				packageInstaller.pending_co = coroutine.create(function()
 					packageInstaller.http = playdate.network.http.new(PACKAGE_HOST, 0, true, "to list downloadable packages")
 					if not packageInstaller.http then
 						packageInstaller.mode = MODE_PROMPT_REFRESH
 					else
 						get_package_list()
 					end
-				end
+				end)
 			end
 		end
 	end)
@@ -701,6 +701,21 @@ function packageInstaller:update()
 		local pending = packageInstaller.pending
 		packageInstaller.pending = nil
 		pending()
+	end
+
+	if packageInstaller.pending_co then
+		local co = packageInstaller.pending_co
+		if coroutine.status(co) == "suspended" then
+			local ok, err = coroutine.resume(co)
+			if not ok then
+				print("coroutine error:", err)
+				packageInstaller.pending_co = nil
+				packageInstaller.mode = MODE_PROMPT_REFRESH
+			end
+		end
+		if coroutine.status(co) == "dead" then
+			packageInstaller.pending_co = nil
+		end
 	end
 	
 	if packageInstaller.mode == MODE_LISTING then
